@@ -2,7 +2,8 @@ import os
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-
+import keras
+import keras.backend as K
 
 def read_img_paths(img_dir):
     paths = []
@@ -44,3 +45,23 @@ def plot_history_item(name, hists, ax, log=False, plot_val=True):
         ax.set_yscale('log')
     ax.grid()
     ax.legend()
+
+
+def short_summary(model):
+    print('Input shapes:', end='')
+    for input in model.inputs:
+        print('', input.shape, end='')
+    print('.')
+
+    print('Output shapes:', end='')
+    for output in model.outputs:
+        print('', output.shape, end='')
+    print('.')
+
+    trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+    non_trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+    print('Total params: {:,}'.format(trainable_count + non_trainable_count))
+    print('Trainable params: {:,}'.format(trainable_count))
+    print('Non-trainable params: {:,}'.format(non_trainable_count))
