@@ -107,7 +107,7 @@ class FakeImageGenerator(Sequence):
 
 def plot_generator_examples(generator):
     X, Y = generator[0]
-    coords_list = [convert_from_Y(Y[i], generator.img_shape, generator.grid_shape, 0.5) for i in range(len(Y))]
+    coords_list = [convert_from_Y(Y[i], generator.img_shape, 0.5)[0] for i in range(len(Y))]
     cols = 3
     rows = 2
     fig=plt.figure(figsize = (cols * 5, rows * 5))
