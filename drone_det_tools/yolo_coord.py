@@ -1,4 +1,4 @@
-import fake_imgs
+from drone_det_tools.fake_imgs import random_insert
 
 import numpy as np
 import cv2
