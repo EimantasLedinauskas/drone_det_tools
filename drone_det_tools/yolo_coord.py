@@ -1,5 +1,6 @@
 from drone_det_tools.fake_imgs import random_insert
 
+import os
 import numpy as np
 import cv2
 import pandas as pd
@@ -187,6 +188,6 @@ def make_detection_csv(model, imgs, paths, output_path):
         coords, confs = detect(model, img, 0.05)
         name = os.path.split(paths[i])[-1]
         for j, coord in enumerate(coords):
-            data.loc[len(data)] = (name, coord[0], coord[1], 0, 0, confs[j])
-    data.to_csv(output_path)
+            data.loc[len(data)] = (name, coord[0], coord[1], np.NaN, np.NaN, confs[j])
+    data.to_csv(output_path, index=False)
     return data
