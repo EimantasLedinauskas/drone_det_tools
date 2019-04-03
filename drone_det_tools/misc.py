@@ -12,9 +12,9 @@ def read_img_paths(img_dir):
     return paths
 
 
-def load_imgs(paths, grayscale=False):
-    imgs = np.empty((len(paths), *IMG_SHAPE), dtype='uint8') if grayscale else \
-           np.empty((len(paths), *IMG_SHAPE, 3), dtype='uint8')
+def load_imgs(paths, img_shape, grayscale=False):
+    imgs = np.empty((len(paths), *img_shape), dtype='uint8') if grayscale else \
+           np.empty((len(paths), *img_shape, 3), dtype='uint8')
     for i, path in enumerate(paths):
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         imgs[i] = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if grayscale else \
