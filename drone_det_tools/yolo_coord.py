@@ -3,6 +3,7 @@ import fake_imgs
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from keras.utils import Sequence
 
 
 def convert_to_Y(coords, img_shape, grid_shape):
