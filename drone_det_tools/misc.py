@@ -26,7 +26,7 @@ def load_imgs(paths, img_shape, grayscale=False):
 def load_imgs_dir(img_dir, colors=cv2.IMREAD_COLOR):
     imgs = []
     for fname in os.listdir(img_dir):
-        if fname[-3:] in ['png', 'jpg', 'JPG', 'PNG', 'JPEG', 'jpeg']:
+        if fname[-3:] in ['png', 'jpg', 'JPG', 'PNG']:
             img = cv2.imread(os.path.join(img_dir, fname), colors)
             if colors == cv2.IMREAD_UNCHANGED:
                 imgs.append(cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA))

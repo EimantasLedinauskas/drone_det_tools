@@ -69,7 +69,7 @@ class CoordFakeGenerator(Sequence):
     def __getitem__(self, idx):
 
         X = np.empty((self.batch_size, *self.img_shape, 1), dtype='float32')
-        if self.grid_shape is list:
+        if type(self.grid_shape) is list:
             Y = [np.empty((self.batch_size, *shape, 3), dtype='float32') for shape in self.grid_shape]
         else:
             Y = np.empty((self.batch_size, self.grid_shape, 3), dtype='float32')
@@ -102,7 +102,7 @@ class CoordFakeGenerator(Sequence):
 
             bgr_img = cv2.cvtColor(bgr_img, cv2.COLOR_RGB2GRAY)
             X[i_batch] = np.expand_dims(np.divide(bgr_img, 255, dtype='float32'), -1)
-            if self.grid_shape is list:
+            if type(self.grid_shape) is list:
                 for i, shape in enumerate(self.grid_shape):
                     Y[i][i_batch] = convert_to_Y(coords, self.img_shape, shape)
             else:
