@@ -41,7 +41,7 @@ def convert_from_Y(Y, img_shape, threshold):
     return np.array(coords), np.array(confs)
 
 
-class FakeImageGenerator(Sequence):
+class CoordFakeGenerator(Sequence):
 
     def __init__(self, bgr_imgs, drone_imgs, bgr_indexes, drone_indexes,
                  batch_size, batches_per_epoch, size_range, rot_range, grid_shape,
@@ -69,7 +69,10 @@ class FakeImageGenerator(Sequence):
     def __getitem__(self, idx):
 
         X = np.empty((self.batch_size, *self.img_shape, 1), dtype='float32')
-        Y = np.empty((self.batch_size, *self.grid_shape, 3), dtype='float32')
+        if self.grid_shape is list:
+            Y = [np.empty((self.batch_size, *shape, 3), dtype='float32') for shape in self.grid_shape]
+        else:
+            Y = np.empty((self.batch_size, self.grid_shape, 3), dtype='float32')
 
         for i_batch in range(self.batch_size):
 
@@ -99,7 +102,11 @@ class FakeImageGenerator(Sequence):
 
             bgr_img = cv2.cvtColor(bgr_img, cv2.COLOR_RGB2GRAY)
             X[i_batch] = np.expand_dims(np.divide(bgr_img, 255, dtype='float32'), -1)
-            Y[i_batch] = convert_to_Y(coords, self.img_shape, self.grid_shape)
+            if self.grid_shape is list:
+                for i, shape in enumerate(self.grid_shape):
+                    Y[i][i_batch] = convert_to_Y(coords, self.img_shape, shape)
+            else:
+                Y[i_batch] = convert_to_Y(coords, self.img_shape, self.grid_shape)
 
         return X, Y
 
@@ -107,12 +114,11 @@ class FakeImageGenerator(Sequence):
         pass
 
 
-def plot_generator_examples(generator):
+def plot_generator_examples(generator, scale_num=0):
     X, Y = generator[0]
-    coords_list = [convert_from_Y(Y[i], generator.img_shape, 0.5)[0] for i in range(len(Y))]
-    cols = 3
-    rows = 2
-    fig=plt.figure(figsize = (cols * 5, rows * 5))
+    coords_list = [convert_from_Y(Y[scale_num][i], generator.img_shape, 0.5)[0] for i in range(len(Y))]
+    cols, rows = 3, 2
+    fig = plt.figure(figsize = (cols * 5, rows * 5))
     for i in range(rows):
         for j in range(cols):
             idx = i + j * rows
@@ -155,8 +161,18 @@ def non_max_suppression(coords, confs, dist_thresh):
 def detect(model, img, threshold):
     img2 = np.expand_dims(img, 0)
     img2 = np.expand_dims(img2, -1)
-    Y_pred = model.predict(img2 / 255)[0]
-    coords, confs = convert_from_Y(Y_pred, img.shape, threshold)
+    Y_pred = model.predict(img2 / 255)
+    if type(Y_pred) is list:
+        coords, confs = [], []
+        for Y in Y_pred:
+            out = convert_from_Y(Y[0], img.shape, threshold)
+            coords.append(out[0])
+            confs.append(out[1])
+            coords = np.concatenate(coords)
+            confs = np.concatenate(confs)
+    else:
+       coords, confs = convert_from_Y(Y_pred[0], img.shape, threshold)
+
     coords, confs = non_max_suppression(coords, confs, 0.1 * img.shape[0])
     return coords, confs
 
