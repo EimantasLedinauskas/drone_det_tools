@@ -35,14 +35,28 @@ def load_imgs_dir(img_dir, colors=cv2.IMREAD_COLOR):
     return np.array(imgs)
 
 
-def plot_history_item(name, hists, ax, log=False, plot_val=True):
-    y = [x for hist in hists for x in hist.history[name]]
-    ax.plot(y, label="Train " + name)
-    if plot_val:
-        y = [x for hist in hists for x in hist.history["val_" + name]]
-        ax.plot(y, label="Validation " + name)
+def plot_history_item(name, hists, ax, log=False, plot_val=True, use_ends_with=False):
+    if use_ends_with:
+        names = []
+        for key in hists[0].history.keys():
+            if key.endswith(name) and not key.startswith('val') :
+                names.append(key)
+        color_vals = np.linspace(0.4, 1.0, len(names))
+    else:
+        names = [name]
+        color_vals = [1.0]
+
+
+    for key, color_val in zip(names, color_vals):
+        y = [x for hist in hists for x in hist.history[key]]
+        ax.plot(y, label="Train " + key, color=(0, 0, color_val))
+        if plot_val:
+            y = [x for hist in hists for x in hist.history["val_" + key]]
+            ax.plot(y, label="Validation " + key, color=(color_val, 0, 0))
+
     if log:
         ax.set_yscale('log')
+
     ax.grid()
     ax.legend()
 
