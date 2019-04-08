@@ -44,12 +44,12 @@ def convert_from_Y(Y, img_shape, threshold):
 
 class CoordFakeGenerator(Sequence):
 
-    def __init__(self, bgr_paths, drone_paths, bgr_indexes, drone_indexes,
-                 batch_size, batches_per_epoch, size_range, rot_range, img_shape, grid_shape,
+    def __init__(self, bgr_paths, drone_paths, batch_size, batches_per_epoch,
+                 size_range, rot_range, img_shape, grid_shape,
                  bird_paths=None, bgr_augmenter=None, augmenter=None, grayscale=True):
 
-        self.bgr_imgs = load_imgs(bgr_paths[bgr_indexes], img_shape)
-        self.drone_imgs = load_imgs(drone_paths[drone_indexes], alpha=True)
+        self.bgr_imgs = load_imgs(bgr_paths, img_shape)
+        self.drone_imgs = load_imgs(drone_paths, alpha=True)
         self.batch_size = batch_size
         self.batches_per_epoch = batches_per_epoch
         self.size_range = size_range
