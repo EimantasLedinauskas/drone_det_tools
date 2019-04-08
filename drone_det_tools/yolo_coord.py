@@ -1,4 +1,5 @@
 from drone_det_tools.fake_imgs import random_insert
+from drone_det_tools.misc import load_imgs
 
 import os
 import numpy as np
@@ -43,24 +44,23 @@ def convert_from_Y(Y, img_shape, threshold):
 
 class CoordFakeGenerator(Sequence):
 
-    def __init__(self, bgr_imgs, drone_imgs, bgr_indexes, drone_indexes,
-                 batch_size, batches_per_epoch, size_range, rot_range, grid_shape,
-                 bird_imgs=None, bgr_augmenter=None, augmenter=None):
+    def __init__(self, bgr_paths, drone_paths, bgr_indexes, drone_indexes,
+                 batch_size, batches_per_epoch, size_range, rot_range, img_shape, grid_shape,
+                 bird_paths=None, bgr_augmenter=None, augmenter=None, grayscale=True):
 
-        self.bgr_imgs = bgr_imgs
-        self.drone_imgs = drone_imgs
-        self.bgr_indexes = bgr_indexes
-        self.drone_indexes = drone_indexes
+        self.bgr_imgs = load_imgs(bgr_paths[bgr_indexes], img_shape)
+        self.drone_imgs = load_imgs(drone_paths[drone_indexes], alpha=True)
         self.batch_size = batch_size
         self.batches_per_epoch = batches_per_epoch
         self.size_range = size_range
         self.rot_range = rot_range
+        self.img_shape = img_shape
         self.grid_shape = grid_shape
-        self.bird_imgs = bird_imgs
+        self.bird_imgs = None if bird_paths is None else load_imgs(bird_paths, alpha=True)
         self.bgr_augmenter = bgr_augmenter
         self.augmenter = augmenter
+        self.grayscale=grayscale
 
-        self.img_shape = bgr_imgs[0].shape[:2]
         self.on_epoch_end()
 
     def __len__(self):
@@ -68,7 +68,7 @@ class CoordFakeGenerator(Sequence):
 
     def __getitem__(self, idx):
 
-        X = np.empty((self.batch_size, *self.img_shape, 1), dtype='float32')
+        X = np.empty((self.batch_size, *self.bgr_imgs[0].shape), dtype='float32')
         if type(self.grid_shape) is list:
             Y = [np.empty((self.batch_size, *shape, 3), dtype='float32') for shape in self.grid_shape]
         else:
@@ -76,7 +76,7 @@ class CoordFakeGenerator(Sequence):
 
         for i_batch in range(self.batch_size):
 
-            bgr_idx = np.random.choice(self.bgr_indexes)
+            bgr_idx = np.random.choice(len(self.bgr_imgs))
             bgr_img = self.bgr_imgs[bgr_idx]
 
             if self.bgr_augmenter is not None:
@@ -92,7 +92,7 @@ class CoordFakeGenerator(Sequence):
             n_drones = np.random.choice(range(1,4))
             coords = np.empty((n_drones, 2))
             for i in range(n_drones):
-                drone_idx = np.random.choice(self.drone_indexes)
+                drone_idx = np.random.choice(len(self.drone_imgs))
                 drone_img = self.drone_imgs[drone_idx]
                 bgr_img, x, y = random_insert(bgr_img, drone_img, self.size_range, self.rot_range, uniform=False)
                 coords[i] = x, y
@@ -100,7 +100,9 @@ class CoordFakeGenerator(Sequence):
             if self.augmenter is not None:
                 bgr_img = self.augmenter.augment_image(bgr_img)
 
-            bgr_img = cv2.cvtColor(bgr_img, cv2.COLOR_RGB2GRAY)
+            if self.grayscale:
+                bgr_img = cv2.cvtColor(bgr_img, cv2.COLOR_RGB2GRAY)
+
             X[i_batch] = np.expand_dims(np.divide(bgr_img, 255, dtype='float32'), -1)
             if type(self.grid_shape) is list:
                 for i, shape in enumerate(self.grid_shape):

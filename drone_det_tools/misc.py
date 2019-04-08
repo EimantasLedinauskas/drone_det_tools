@@ -8,31 +8,38 @@ import keras.backend as K
 def read_img_paths(img_dir):
     paths = []
     for i, fname in enumerate(os.listdir(img_dir)):
-        if fname[-3:] in ['png', 'jpg', 'JPG', 'PNG', 'JPEG', 'jpeg']:
-            paths.append(os.path.join(img_dir, fname))
-    return paths
-
-
-def load_imgs(paths, img_shape, grayscale=False):
-    imgs = np.empty((len(paths), *img_shape), dtype='uint8') if grayscale else \
-           np.empty((len(paths), *img_shape, 3), dtype='uint8')
-    for i, path in enumerate(paths):
-        img = cv2.imread(path, cv2.IMREAD_COLOR)
-        imgs[i] = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if grayscale else \
-              cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return np.array(imgs)
-
-
-def load_imgs_dir(img_dir, colors=cv2.IMREAD_COLOR):
-    imgs = []
-    for fname in os.listdir(img_dir):
         if fname[-3:] in ['png', 'jpg', 'JPG', 'PNG']:
-            img = cv2.imread(os.path.join(img_dir, fname), colors)
-            if colors == cv2.IMREAD_UNCHANGED:
-                imgs.append(cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA))
-            elif colors == cv2.IMREAD_COLOR:
-                imgs.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            paths.append(os.path.join(img_dir, fname))
+    return np.array(paths)
+
+
+def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
+    if alpha:
+        imgs = np.empty((len(paths), *img_shape, 4), dtype='uint8')
+        colors = cv2.IMREAD_UNCHANGED
+        conversion = cv2.COLOR_BGRA2RGBA
+    elif grayscale:
+        imgs = np.empty((len(paths), *img_shape, 1), dtype='uint8')
+        colors = cv2.IMREAD_GRAYSCALE
+    else:
+        imgs = np.empty((len(paths), *img_shape, 3), dtype='uint8')
+        colors = cv2.IMREAD_COLOR
+        conversion = cv2.COLOR_BGR2RGB
+
+    for i, path in enumerate(paths):
+        img = cv2.imread(path, colors)
+        if img_shape is not None and img.shape[:2] != img_shape:
+            img = cv2.resize(img, img_shape[::-1])
+        if not grayscale:
+            img = cv2.cvtColor(img, conversion)
+        imgs[i] = img
+
     return np.array(imgs)
+
+
+def load_imgs_dir(img_dir, img_shape, grayscale=False, alpha=False):
+    paths = read_img_paths(img_dir)
+    return load_imgs(paths, img_shape, grayscale, alpha)
 
 
 def plot_history_item(name, hists, ax, log=False, plot_val=True, use_ends_with=False):
