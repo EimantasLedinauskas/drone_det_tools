@@ -50,7 +50,7 @@ def insert_subimg(img, subimg, row, col):
     return result
 
 
-def random_insert(img, subimg, size_range, angle_range, uniform=True):
+def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=False):
     min_size, max_size = size_range
     min_angle, max_angle = angle_range
 
@@ -63,16 +63,20 @@ def random_insert(img, subimg, size_range, angle_range, uniform=True):
     scale = size / max(subimg.shape[0], subimg.shape[1])
     subimg_resc = cv2.resize(subimg, (int(subimg.shape[1] * scale), int(subimg.shape[0] * scale)))
 
+    if thermal:
+        subimg_resc[..., :3] = 255 - subimg_resc[..., :3]
+        subimg_resc[..., :3] = np.uint8(np.clip(subimg_resc[..., :3] * np.random.uniform(1.0, 1.5), 0, 255))
+    else:
+        # shuffle color channels
+        perm = np.random.permutation(3)
+        perm = np.append(perm, 3)
+        subimg_resc = subimg_resc[:, :, perm]
+
     angle = np.random.uniform(min_angle, max_angle)
     subimg_resc = rotate_img(subimg_resc, angle)
 
     if np.random.rand() < 0.5:
         subimg_resc = cv2.flip(subimg_resc, 1);
-
-    # shuffle color channels
-    perm = np.random.permutation(3)
-    perm = np.append(perm, 3)
-    subimg_resc = subimg_resc[:, :, perm]
 
     row = np.random.randint(img.shape[0] - subimg_resc.shape[0])
     col = np.random.randint(img.shape[1] - subimg_resc.shape[1])

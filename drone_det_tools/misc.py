@@ -8,7 +8,7 @@ import keras.backend as K
 def read_img_paths(img_dir):
     paths = []
     for i, fname in enumerate(os.listdir(img_dir)):
-        if fname[-3:] in ['png', 'jpg', 'JPG', 'PNG']:
+        if fname[-3:] in ['png', 'jpg', 'JPG', 'PNG'] or fname[-4:] in ['jpeg', 'JPEG']:
             paths.append(os.path.join(img_dir, fname))
     return np.array(paths)
 
