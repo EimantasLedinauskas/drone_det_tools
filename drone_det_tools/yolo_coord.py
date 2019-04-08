@@ -42,11 +42,18 @@ def convert_from_Y(Y, img_shape, threshold):
     return np.array(coords), np.array(confs)
 
 
+def random_img(imgs):
+    idx = np.random.choice(len(imgs))
+    return imgs[idx]
+
+
 class CoordFakeGenerator(Sequence):
+
+    colors = {'color': 0, 'grayscale': 1, 'thermal': 2}
 
     def __init__(self, bgr_paths, drone_paths, batch_size, batches_per_epoch,
                  size_range, rot_range, img_shape, grid_shape,
-                 bird_paths=None, bgr_augmenter=None, augmenter=None, grayscale=True, thermal=False):
+                 bird_paths=None, bgr_augmenter=None, augmenter=None, colors='color'):
 
         self.bgr_imgs = load_imgs(bgr_paths, img_shape)
         self.drone_imgs = load_imgs(drone_paths, alpha=True)
@@ -59,8 +66,7 @@ class CoordFakeGenerator(Sequence):
         self.bird_imgs = None if bird_paths is None else load_imgs(bird_paths, alpha=True)
         self.bgr_augmenter = bgr_augmenter
         self.augmenter = augmenter
-        self.grayscale = grayscale
-        self.thermal = thermal
+        self.color = CoordFakeGenerator.colors[colors]
 
         self.on_epoch_end()
 
@@ -69,7 +75,7 @@ class CoordFakeGenerator(Sequence):
 
     def __getitem__(self, idx):
 
-        n_channels = 1 if self.grayscale or self.thermal else 3
+        n_channels = 1 if self.color in (1, 2) else 3
         X = np.empty((self.batch_size, *self.img_shape, n_channels), dtype='float32')
         if type(self.grid_shape) is list:
             Y = [np.empty((self.batch_size, *shape, 3), dtype='float32') for shape in self.grid_shape]
@@ -78,35 +84,32 @@ class CoordFakeGenerator(Sequence):
 
         for i_batch in range(self.batch_size):
 
-            bgr_idx = np.random.choice(len(self.bgr_imgs))
-            bgr_img = self.bgr_imgs[bgr_idx]
-
+            bgr_img = random_img(self.bgr_imgs)
             if self.bgr_augmenter is not None:
                 bgr_img = self.bgr_augmenter.augment_image(bgr_img)
 
             if self.bird_imgs is not None:
                 n_birds = np.random.choice(4)
                 for i in range(n_birds):
-                    bird_idx = np.random.choice(len(self.bird_imgs))
-                    bird_img = self.bird_imgs[bird_idx]
-                    bgr_img, _, _ = random_insert(bgr_img, bird_img, self.size_range, self.rot_range, uniform=False, thermal=self.thermal)
+                    bird_img = random_img(self.bird_imgs)
+                    bgr_img, _, _ = random_insert(bgr_img, bird_img, self.size_range, self.rot_range,
+                                                  uniform=False, thermal=self.color==2)
 
             n_drones = np.random.choice(range(1,4))
             coords = np.empty((n_drones, 2))
             for i in range(n_drones):
-                drone_idx = np.random.choice(len(self.drone_imgs))
-                drone_img = self.drone_imgs[drone_idx]
-                bgr_img, x, y = random_insert(bgr_img, drone_img, self.size_range, self.rot_range, uniform=False, thermal=self.thermal)
+                drone_img = random_img(self.drone_imgs)
+                bgr_img, x, y = random_insert(bgr_img, drone_img, self.size_range, self.rot_range,
+                                              uniform=False, thermal=self.color==2)
                 coords[i] = x, y
 
             if self.augmenter is not None:
                 bgr_img = self.augmenter.augment_image(bgr_img)
 
-            if self.grayscale and not self.thermal:
+            if self.color == 1:  # if grayscale
                 bgr_img = cv2.cvtColor(bgr_img, cv2.COLOR_RGB2GRAY)
                 bgr_img = np.expand_dims(bgr_img, -1)
-
-            if self.thermal:
+            elif self.color == 2:  # if thermal
                 bgr_img = bgr_img[..., 0]
                 bgr_img = np.expand_dims(bgr_img, -1)
 
