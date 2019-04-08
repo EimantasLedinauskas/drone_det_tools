@@ -15,29 +15,33 @@ def read_img_paths(img_dir):
 
 def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
     if alpha:
-        imgs = np.empty((len(paths), *img_shape, 4), dtype='uint8')
+        n_channels = 4
         colors = cv2.IMREAD_UNCHANGED
         conversion = cv2.COLOR_BGRA2RGBA
     elif grayscale:
-        imgs = np.empty((len(paths), *img_shape, 1), dtype='uint8')
+        n_channels = 1
         colors = cv2.IMREAD_GRAYSCALE
     else:
-        imgs = np.empty((len(paths), *img_shape, 3), dtype='uint8')
+        n_channels = 3
         colors = cv2.IMREAD_COLOR
         conversion = cv2.COLOR_BGR2RGB
 
+    imgs = [] if img_shape is None else \
+           np.empty((len(paths), *img_shape, n_channels), dtype='uint8')
+
     for i, path in enumerate(paths):
         img = cv2.imread(path, colors)
-        if img_shape is not None and img.shape[:2] != img_shape:
-            img = cv2.resize(img, img_shape[::-1])
         if not grayscale:
             img = cv2.cvtColor(img, conversion)
-        imgs[i] = img
+        if img_shape is not None:
+            imgs[i] = img if img.shape[:2] == img_shape else cv2.resize(img, img_shape[::-1])
+        else:
+            imgs.append(img)
 
     return np.array(imgs)
 
 
-def load_imgs_dir(img_dir, img_shape, grayscale=False, alpha=False):
+def load_imgs_dir(img_dir, img_shape=None, grayscale=False, alpha=False):
     paths = read_img_paths(img_dir)
     return load_imgs(paths, img_shape, grayscale, alpha)
 
