@@ -184,6 +184,9 @@ def detect(model, img, threshold):
         if len(coords) > 0:
             coords = np.concatenate(coords)
             confs = np.concatenate(confs)
+        else:
+            coords = np.array(coords)
+            confs = np.array(confs)
     else:
        coords, confs = convert_from_Y(Y_pred[0], img.shape, threshold)
 
