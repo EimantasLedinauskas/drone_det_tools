@@ -171,7 +171,8 @@ def non_max_suppression(coords, confs, dist_thresh):
 
 def detect(model, img, threshold):
     img2 = np.expand_dims(img, 0)
-    img2 = np.expand_dims(img2, -1)
+    if len(img2.shape) < 4:
+        img2 = np.expand_dims(img2, -1)
     Y_pred = model.predict(img2 / 255)
     if type(Y_pred) is list:
         coords, confs = [], []
@@ -202,7 +203,7 @@ def display_detections(model, imgs):
             plt.axis('off')
             img_num = np.random.choice(len(imgs))
             coords, _ = detect(model, imgs[img_num], 0.05)
-            plt.imshow(imgs[img_num])
+            plt.imshow(np.squeeze(imgs[img_num]))
             for coord in coords:
                 x, y = coord
                 circle = plt.Circle((x, y), 30, color='r', fill=False, linewidth=3)
