@@ -193,8 +193,8 @@ def detect(model, img, threshold, max_detections=100):
     coords, confs = non_max_suppression(coords, confs, 0.1 * img.shape[0])
     if len(coords) > max_detections:
         sort_perm = np.argsort(confs)
-        coords = coords[soft_perm][:max_detections]
-        confs = confs[soft_perm][:max_detections]
+        coords = coords[sort_perm][:max_detections]
+        confs = confs[sort_perm][:max_detections]
 
     return coords, confs
 
