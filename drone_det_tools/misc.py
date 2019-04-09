@@ -31,7 +31,9 @@ def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
 
     for i, path in enumerate(paths):
         img = cv2.imread(path, colors)
-        if not grayscale:
+        if grayscale:
+            img = np.expand_dims(img, -1)
+        else:
             img = cv2.cvtColor(img, conversion)
         if img_shape is not None:
             imgs[i] = img if img.shape[:2] == img_shape else cv2.resize(img, img_shape[::-1])
