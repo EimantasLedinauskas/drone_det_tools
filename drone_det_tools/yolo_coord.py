@@ -169,7 +169,7 @@ def non_max_suppression(coords, confs, dist_thresh):
     return coords[best_arr], confs[best_arr]
 
 
-def detect(model, img, threshold):
+def detect(model, img, threshold, max_detections=100):
     img2 = np.expand_dims(img, 0)
     if len(img2.shape) < 4:
         img2 = np.expand_dims(img2, -1)
@@ -191,6 +191,11 @@ def detect(model, img, threshold):
        coords, confs = convert_from_Y(Y_pred[0], img.shape, threshold)
 
     coords, confs = non_max_suppression(coords, confs, 0.1 * img.shape[0])
+    if len(coords) > max_detections:
+        sort_perm = np.argsort(confs)
+        coords = coords[soft_perm][:max_detections]
+        confs = confs[soft_perm][:max_detections]
+
     return coords, confs
 
 
@@ -215,10 +220,10 @@ def display_detections(model, imgs):
     plt.tight_layout()
 
 
-def make_detection_csv(model, imgs, paths, output_path):
+def make_detection_csv(model, imgs, paths, output_path, max_detections=100):
     data = pd.DataFrame(columns=('name', 'x1', 'y1', 'x2', 'y2', 'p'))
     for i, img in enumerate(imgs):
-        coords, confs = detect(model, img, 0.05)
+        coords, confs = detect(model, img, 0.05, max_detections=max_detections)
         name = os.path.split(paths[i])[-1]
         for j, coord in enumerate(coords):
             data.loc[len(data)] = (name, coord[0], coord[1], np.NaN, np.NaN, confs[j])
