@@ -96,11 +96,17 @@ def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
     true_annotations = {}
     pred_annotations = defaultdict(list)
 
+    n_skipped = 0
+
     # iterating over images used to test the network
     for img_name in tqdm(img_names):
 
-        row_gt = true_annotations_df.loc[true_annotations_df['img_name']
-                                         == img_name].iloc[0]
+        try:
+            row_gt = true_annotations_df.loc[true_annotations_df['img_name'] == img_name].iloc[0]
+        except IndexError:
+            n_skipped += 1
+            continue
+
         bbox_true = tuple(row_gt[['x1', 'y1', 'x2', 'y2']])
 
         true_annotations[img_name] = bbox_true
@@ -111,6 +117,8 @@ def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
             p_pred = row[['p']][0]
 
             pred_annotations[img_name].append((bbox_pred, p_pred))
+
+        print('Nr. of skipped imgs:', n_skipped)
 
     return true_annotations, pred_annotations
 
