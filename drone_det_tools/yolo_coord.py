@@ -220,7 +220,7 @@ def display_detections(model, imgs):
 
 
 def make_detection_csv(model, imgs, paths, output_path, max_detections=100):
-    data = pd.DataFrame(columns=('name', 'x1', 'y1', 'x2', 'y2', 'p'))
+    data = pd.DataFrame(columns=('img_name', 'x1', 'y1', 'x2', 'y2', 'p'))
     for i, img in enumerate(imgs):
         coords, confs = detect(model, img, 0.05, max_detections=max_detections)
         name = os.path.split(paths[i])[-1]
