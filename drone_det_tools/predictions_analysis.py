@@ -14,7 +14,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from collections import defaultdict
-from tqdm import tqdm
 import cProfile
 
 
@@ -99,7 +98,7 @@ def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
     n_skipped = 0
 
     # iterating over images used to test the network
-    for img_name in tqdm(img_names):
+    for img_name in img_names:
 
         try:
             row_gt = true_annotations_df.loc[true_annotations_df['img_name'] == img_name].iloc[0]
@@ -118,7 +117,8 @@ def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
 
             pred_annotations[img_name].append((bbox_pred, p_pred))
 
-    print('Nr. of skipped imgs:', n_skipped)
+    if n_skipped > 0:
+        print('Nr. of skipped imgs:', n_skipped)
     return true_annotations, pred_annotations
 
 
@@ -259,7 +259,7 @@ def compute_detection_stats_vs_p_thresh(pred_annotations,
     TN, TP, FN, FP = [], [], [], []
 
     P = np.linspace(p_min, p_max, 50)
-    for p in tqdm(P):
+    for p in P:
         tn, tp, fn, fp = get_detection_stats(pred_annotations,
                                              true_annotations,
                                              p_thresh=p,
