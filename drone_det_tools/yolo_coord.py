@@ -200,8 +200,7 @@ def detect(model, img, threshold, max_detections=100):
 
 
 def display_detections(model, imgs):
-    cols = 3
-    rows = 3
+    cols, rows = 3, 3
     fig=plt.figure(figsize = (cols * 5, rows * 5))
 
     for i in range(rows):
