@@ -80,7 +80,7 @@ class CoordFakeGenerator(Sequence):
         if type(self.grid_shape) is list:
             Y = [np.empty((self.batch_size, *shape, 3), dtype='float32') for shape in self.grid_shape]
         else:
-            Y = np.empty((self.batch_size, self.grid_shape, 3), dtype='float32')
+            Y = np.empty((self.batch_size, *self.grid_shape, 3), dtype='float32')
 
         for i_batch in range(self.batch_size):
 
