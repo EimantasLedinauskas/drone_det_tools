@@ -118,8 +118,7 @@ def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
 
             pred_annotations[img_name].append((bbox_pred, p_pred))
 
-        print('Nr. of skipped imgs:', n_skipped)
-
+    print('Nr. of skipped imgs:', n_skipped)
     return true_annotations, pred_annotations
 
 
