@@ -127,7 +127,11 @@ class CoordFakeGenerator(Sequence):
 
 def plot_generator_examples(generator, scale_num=0):
     X, Y = generator[0]
-    coords_list = [convert_from_Y(Y[scale_num][i], generator.img_shape, 0.5)[0] for i in range(len(Y[scale_num]))]
+    if type(Y) is list:
+        coords_list = [convert_from_Y(Y[scale_num][i], generator.img_shape, 0.5)[0] for i in range(len(Y[scale_num]))]
+    else:
+        coords_list = [convert_from_Y(Y[i], generator.img_shape, 0.5)[0] for i in range(len(Y)]
+
     cols, rows = 3, 2
     fig = plt.figure(figsize = (cols * 5, rows * 5))
     for i in range(rows):
