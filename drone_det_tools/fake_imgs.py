@@ -50,7 +50,8 @@ def insert_subimg(img, subimg, row, col):
     return result
 
 
-def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=False):
+def random_insert(img, subimg, size_range, angle_range, coords_only=False,
+                  uniform=True, thermal=False):
     min_size, max_size = size_range
     min_angle, max_angle = angle_range
 
@@ -80,7 +81,14 @@ def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=Fa
 
     row = np.random.randint(img.shape[0] - subimg_resc.shape[0])
     col = np.random.randint(img.shape[1] - subimg_resc.shape[1])
-    x = int(round(col + subimg_resc.shape[1] / 2))
-    y = int(round(row + subimg_resc.shape[0] / 2))
 
-    return insert_subimg(img, subimg_resc, row, col), x, y
+    if coords_only:
+        x = int(round(col + subimg_resc.shape[1] / 2))
+        y = int(round(row + subimg_resc.shape[0] / 2))
+        return insert_subimg(img, subimg_resc, row, col), (x, y)
+    else:
+        x1 = int(col)
+        y1 = int(row)
+        x2 = int(col + subimg_resc.shape[1])
+        y2 = int(row + subimg_resc.shape[0])
+        return insert_subimg(img, subimg_resc, row, col), (x1, y1, x2, y2)
