@@ -216,7 +216,7 @@ def non_max_suppression(locations, confs, threshold):
     Returns coords with most confidence that differ more than dist_thresh from each other
     '''
     if len(locations) == 0:
-        return locations
+        return locations, confs
     only_coords = locations.shape[1] == 2
     best_arr = []  # array of max confidence indexes corresponding to different detected objects
     for i in range(len(locations)):
