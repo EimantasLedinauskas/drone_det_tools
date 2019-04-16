@@ -215,6 +215,8 @@ def non_max_suppression(locations, confs, threshold):
     confs shape: (n_coords, 1)
     Returns coords with most confidence that differ more than dist_thresh from each other
     '''
+    if len(locations) == 0:
+        return locations
     only_coords = locations.shape[1] == 2
     best_arr = []  # array of max confidence indexes corresponding to different detected objects
     for i in range(len(locations)):
@@ -231,7 +233,7 @@ def non_max_suppression(locations, confs, threshold):
         if new_group:
             best_arr.append(i)
 
-    return locations[best_arr], locations[best_arr]
+    return locations[best_arr], confs[best_arr]
 
 
 def detect(model, img, threshold, max_detections=100):
