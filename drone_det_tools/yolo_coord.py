@@ -223,7 +223,7 @@ def non_max_suppression(locations, confs, threshold, coords_only=False):
         for j_idx, j in enumerate(best_arr):
             delta = np.sqrt(np.sum(np.square(locations[i] - locations[j]))) if coords_only else \
                     iou(locations[i], locations[j])
-            if (coords_only and delta < threshold) or (not coords only and delta > threshold):
+            if (coords_only and delta < threshold) or (not coords_only and delta > threshold):
                 new_group = False
                 if confs[i] > confs[j]:
                     best_arr[j_idx] = i
