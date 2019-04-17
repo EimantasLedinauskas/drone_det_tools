@@ -130,9 +130,9 @@ class BboxFakeGenerator(Sequence):
             X[i_batch] = np.divide(bgr_img, 255, dtype='float32')
             if type(self.grid_shape) is list:
                 for i, shape in enumerate(self.grid_shape):
-                    Y[i][i_batch] = self.bboxes_to_Y(locations, self.img_shape, shape)
+                    Y[i][i_batch] = self.bboxes_to_Y(bboxes, self.img_shape, shape)
             else:
-                Y[i_batch] = self.bboxes_to_Y(locations, self.img_shape, self.grid_shape)
+                Y[i_batch] = self.bboxes_to_Y(bboxes, self.img_shape, self.grid_shape)
 
         return X, Y
 
@@ -166,7 +166,7 @@ def plot_generator_examples(generator, scale_num=0):
 def non_max_suppression(bboxes, confs, threshold):
     '''
     Performs non-max suppression for a single image
-    locations shape: (n_coords, 2) or (n_bboxes, 4)
+    bboxes shape: (n_bboxes, 4)
     confs shape: (n_coords, 1)
     Returns coords with most confidence that differ more than dist_thresh from each other
     '''
@@ -197,7 +197,7 @@ def detect(model, img, threshold, max_detections=100):
         for Y in Y_pred:
             out = bboxes_from_Y(Y[0], img.shape, threshold)
             if len(out[0]) > 0:
-                locations.append(out[0])
+                bboxes.append(out[0])
                 bboxes.append(out[1])
         if len(bboxes) > 0:
             bboxes = np.concatenate(bboxes)
@@ -209,7 +209,7 @@ def detect(model, img, threshold, max_detections=100):
         bboxes, confs = bboxes_from_Y(Y_pred[0], img.shape, threshold)
 
     bboxes, confs = non_max_suppression(bboxes, confs, 0.5)
-    if len(locations) > max_detections:
+    if len(bboxes) > max_detections:
         sort_perm = np.argsort(confs)
         bboxes = bboxes[sort_perm][:max_detections]
         confs = confs[sort_perm][:max_detections]

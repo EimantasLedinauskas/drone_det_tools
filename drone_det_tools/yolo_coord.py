@@ -208,7 +208,7 @@ def plot_generator_examples(generator, scale_num=0):
     plt.tight_layout()
 
 
-def non_max_suppression(locations, confs, threshold):
+def non_max_suppression(locations, confs, threshold, coords_only=False):
     '''
     Performs non-max suppression for a single image
     locations shape: (n_coords, 2) or (n_bboxes, 4)
@@ -217,14 +217,13 @@ def non_max_suppression(locations, confs, threshold):
     '''
     if len(locations) == 0:
         return locations, confs
-    only_coords = locations.shape[1] == 2
     best_arr = []  # array of max confidence indexes corresponding to different detected objects
     for i in range(len(locations)):
         new_group = True
         for j_idx, j in enumerate(best_arr):
-            delta = np.sqrt(np.sum(np.square(locations[i] - locations[j]))) if only_coords else \
+            delta = np.sqrt(np.sum(np.square(locations[i] - locations[j]))) if coords_only else \
                     iou(locations[i], locations[j])
-            if delta < threshold:
+            if (coords_only and delta < threshold) or (not coords only and delta > threshold):
                 new_group = False
                 if confs[i] > confs[j]:
                     best_arr[j_idx] = i
@@ -262,7 +261,8 @@ def detect(model, img, threshold, max_detections=100):
     else:
         locations, confs = location_from_Y(Y_pred[0], img.shape, threshold)
 
-    locations, confs = non_max_suppression(locations, confs, 0.1 * img.shape[0])
+    thrsh = 0.1 * img.shape[0] if coords_only else 0.5
+    locations, confs = non_max_suppression(locations, confs, thrsh, coords_only)
     if len(locations) > max_detections:
         sort_perm = np.argsort(confs)
         locations = locations[sort_perm][:max_detections]
