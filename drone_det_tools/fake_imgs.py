@@ -61,6 +61,8 @@ def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=Fa
     new_w = int(subimg.shape[1] * scale)
     new_h = int(subimg.shape[0] * scale)
     if new_h == 0 or new_w == 0:
+        if only_coords:
+            return img, (0, 0)
         return img, (0, 0, 0, 0)
     subimg_resc = cv2.resize(subimg, (new_w, new_h))
 
@@ -77,6 +79,8 @@ def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=Fa
     subimg_resc = rotate_img(subimg_resc, angle)
 
     if subimg_resc.shape[0] == 0 or subimg_resc.shape[1] == 0:
+        if only_coords:
+            return img, (0, 0)
         return img, (0, 0, 0, 0)
 
     if np.random.rand() < 0.5:
@@ -88,7 +92,7 @@ def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=Fa
     if only_coords:
         x = int(round(col + subimg_resc.shape[1] / 2))
         y = int(round(row + subimg_resc.shape[0] / 2))
-        return insert_subimg(img, subimg_resc, row, col), x, y
+        return insert_subimg(img, subimg_resc, row, col), (x, y)
 
     x1 = int(col)
     y1 = int(row)
