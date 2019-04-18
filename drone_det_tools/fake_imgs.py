@@ -2,24 +2,9 @@ import numpy as np
 import cv2
 
 
-def find_i_min_i_max(arr, axis, threshold):
-    sums = np.sum(arr, axis)
-    i_min = 0
-    while sums[i_min] < threshold:
-        i_min += 1
-
-    i_max = len(sums) - 1
-    while sums[i_max] < threshold:
-        i_max -= 1
-
-    return i_min, i_max
-
-
-def trim_image(img, threshold=5):
-    alpha_ch = img[:, :, 3]
-    i_min, i_max = find_i_min_i_max(alpha_ch, 0, threshold)
-    j_min, j_max = find_i_min_i_max(alpha_ch, 1, threshold)
-    return img[j_min:j_max, i_min:i_max]
+def trim_image(img, threshold=1):
+    x, y, w, h = cv2.boundingRect(img[:, :, 3])
+    return img[y:y+h, x:x+w]
 
 
 def rotate_img(img, angle):
@@ -37,11 +22,10 @@ def rotate_img(img, angle):
 
 def insert_subimg(img, subimg, row, col):
     result = np.copy(img)
-    mask = np.stack((subimg[:, :, 3] / 255, subimg[:, :, 3] / 255, subimg[:, :, 3] / 255), axis=2)
-    y1 = row
-    y2 = row+subimg.shape[0]
-    x1 = col
-    x2 = col+subimg.shape[1]
+    mask = subimg[:, :, 3] / 255
+    mask = np.stack((mask, mask, mask), axis=2)
+    x1, y1 = col, row
+    x2, y2 = col + subimg.shape[1], row + subimg.shape[0]
     result[y1:y2, x1:x2] = np.uint8( result[y1:y2, x1:x2] * (1 - mask) )
     result[y1:y2, x1:x2] += np.uint8(mask * subimg[:, :, :3])
     blured = cv2.GaussianBlur(result[y1:y2, x1:x2], (3,3), 0)
@@ -50,10 +34,21 @@ def insert_subimg(img, subimg, row, col):
     return result
 
 
-def random_insert(img, subimg, size_range, angle_range, coords_only=False,
-                  uniform=True, thermal=False):
+def smoothize_alpha(img):
+    mask = img[:, :, 3]
+    kernel = np.ones((5,5), np.uint8)
+    mask = cv2.erode(mask, kernel, iterations=1)
+    mask = cv2.GaussianBlur(mask, (5,5), 0)
+    img[:, :, 3] = mask
+    return img
+
+
+def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=False, feathering=False):
     min_size, max_size = size_range
     min_angle, max_angle = angle_range
+
+    if feathering:
+        subimg = smoothize_alpha(subimg)
 
     if uniform:
         size = np.random.uniform(min_size, max_size)
@@ -62,7 +57,11 @@ def random_insert(img, subimg, size_range, angle_range, coords_only=False,
 
     size = size * min(img.shape[0], img.shape[1])
     scale = size / max(subimg.shape[0], subimg.shape[1])
-    subimg_resc = cv2.resize(subimg, (int(subimg.shape[1] * scale), int(subimg.shape[0] * scale)))
+    new_w = int(subimg.shape[1] * scale)
+    new_h = int(subimg.shape[0] * scale)
+    if new_h == 0 or new_w == 0:
+        return img, (0, 0, 0, 0)
+    subimg_resc = cv2.resize(subimg, (new_w, new_h))
 
     if thermal:
         subimg_resc[..., :3] = 255 - subimg_resc[..., :3]
@@ -76,19 +75,40 @@ def random_insert(img, subimg, size_range, angle_range, coords_only=False,
     angle = np.random.uniform(min_angle, max_angle)
     subimg_resc = rotate_img(subimg_resc, angle)
 
+    if subimg_resc.shape[0] == 0 or subimg_resc.shape[1] == 0:
+        return img, (0, 0, 0, 0)
+
     if np.random.rand() < 0.5:
         subimg_resc = cv2.flip(subimg_resc, 1);
 
     row = np.random.randint(img.shape[0] - subimg_resc.shape[0])
     col = np.random.randint(img.shape[1] - subimg_resc.shape[1])
 
-    if coords_only:
-        x = int(round(col + subimg_resc.shape[1] / 2))
-        y = int(round(row + subimg_resc.shape[0] / 2))
-        return insert_subimg(img, subimg_resc, row, col), (x, y)
-    else:
-        x1 = int(col)
-        y1 = int(row)
-        x2 = int(col + subimg_resc.shape[1])
-        y2 = int(row + subimg_resc.shape[0])
-        return insert_subimg(img, subimg_resc, row, col), (x1, y1, x2, y2)
+    x1 = int(col)
+    y1 = int(row)
+    x2 = int(col + subimg_resc.shape[1])
+    y2 = int(row + subimg_resc.shape[0])
+    return insert_subimg(img, subimg_resc, row, col), (x1, y1, x2, y2)
+
+
+def random_fragment(img, width, height):
+    width = int(width * img.shape[1])
+    height = int(height * img.shape[0])
+    x = np.random.randint(img.shape[1] - width)
+    y = np.random.randint(img.shape[0] - height)
+    return img[y:y+height, x:x+width]
+
+
+def random_fragmentized_insert(img, subimg, n_fragments, fragment_size_range, size_range,
+                               angle_range, uniform=True, thermal=False, feathering=True):
+    subimg = trim_image(subimg)
+    for _ in range(n_fragments):
+        width = np.random.uniform(fragment_size_range[0], fragment_size_range[1])
+        height = np.random.uniform(fragment_size_range[0], fragment_size_range[1])
+        fragment = random_fragment(subimg, width, height)
+        if np.sum(fragment[..., 3]) < 5:
+            continue
+        img, _ = random_insert(img, fragment, size_range, angle_range, uniform=uniform,
+                            thermal=thermal, feathering=feathering)
+
+    return img
