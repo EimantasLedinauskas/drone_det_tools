@@ -43,7 +43,8 @@ def smoothize_alpha(img):
     return img
 
 
-def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=False, feathering=False):
+def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=False, feathering=False,
+                 only_coords=False):
     min_size, max_size = size_range
     min_angle, max_angle = angle_range
 
@@ -84,6 +85,11 @@ def random_insert(img, subimg, size_range, angle_range, uniform=True, thermal=Fa
     row = np.random.randint(img.shape[0] - subimg_resc.shape[0])
     col = np.random.randint(img.shape[1] - subimg_resc.shape[1])
 
+    if only_coords:
+        x = int(round(col + subimg_resc.shape[1] / 2))
+        y = int(round(row + subimg_resc.shape[0] / 2))
+        return insert_subimg(img, subimg_resc, row, col), x, y
+
     x1 = int(col)
     y1 = int(row)
     x2 = int(col + subimg_resc.shape[1])
@@ -100,15 +106,14 @@ def random_fragment(img, width, height):
 
 
 def random_fragmentized_insert(img, subimg, n_fragments, fragment_size_range, size_range,
-                               angle_range, uniform=True, thermal=False, feathering=True):
-    subimg = trim_image(subimg)
+                               angle_range, uniform=True, thermal=False):
+    subimg_trimed = trim_image(subimg)
     for _ in range(n_fragments):
         width = np.random.uniform(fragment_size_range[0], fragment_size_range[1])
         height = np.random.uniform(fragment_size_range[0], fragment_size_range[1])
-        fragment = random_fragment(subimg, width, height)
+        fragment = random_fragment(subimg_trimed, width, height)
         if np.sum(fragment[..., 3]) < 5:
             continue
         img, _ = random_insert(img, fragment, size_range, angle_range, uniform=uniform,
-                            thermal=thermal, feathering=feathering)
-
+                               thermal=thermal, feathering=True, only_coords=True)
     return img
