@@ -145,14 +145,15 @@ class CoordFakeGenerator(Sequence):
                 for i in range(n_birds):
                     bird_img = random_img(self.bird_imgs)
                     bgr_img, _ = random_insert(bgr_img, bird_img, self.size_range, self.rot_range,
-                                                  uniform=False, thermal=self.color==2)
+                                               uniform=False, thermal=self.color==2,
+                                               only_coords=self.coords_only)
 
             if self.fragments:
                 n_fragments = np.random.choice(3)
                 size_range = (0.1 * self.size_range[0], 0.1 * self.size_range[1])
                 for i in range(n_fragments):
                     drone_img = random_img(self.drone_imgs)
-                    bgr_img = random_fragmentized_insert(bgr_img, drone_img, 5, (0.05, 0.3),
+                    bgr_img = random_fragmentized_insert(bgr_img, drone_img, 10, (0.05, 0.3),
                                 size_range, self.rot_range, uniform=False, thermal=self.color==2)
 
             n_drones = np.random.choice(range(1,4))
@@ -160,7 +161,8 @@ class CoordFakeGenerator(Sequence):
             for i in range(n_drones):
                 drone_img = random_img(self.drone_imgs)
                 bgr_img, loc = random_insert(bgr_img, drone_img, self.size_range, self.rot_range,
-                                              uniform=False, thermal=self.color==2)
+                                             uniform=False, thermal=self.color==2,
+                                             only_coords=self.coords_only)
                 locations[i] = loc
 
             if self.augmenter is not None:
