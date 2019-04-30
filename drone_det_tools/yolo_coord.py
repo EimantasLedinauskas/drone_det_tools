@@ -100,7 +100,7 @@ class CoordFakeGenerator(Sequence):
     def __init__(self, bgr_paths, drone_paths, batch_size, batches_per_epoch,
                  size_range, rot_range, img_shape, grid_shape, coords_only=False,
                  bird_paths=None, bgr_augmenter=None, augmenter=None, colors='color',
-                 fragments=False):
+                 fragments=False, n_drones=1, n_birds=1):
 
         self.bgr_imgs = load_imgs(bgr_paths, img_shape)
         self.drone_imgs = load_imgs(drone_paths, alpha=True)
@@ -116,6 +116,8 @@ class CoordFakeGenerator(Sequence):
         self.augmenter = augmenter
         self.color = CoordFakeGenerator.colors[colors]
         self.fragments = fragments
+        self.n_drones = n_drones
+        self.n_birds = n_birds
 
         self.locations_to_Y = coords_to_Y if self.coords_only else bboxes_to_Y
 
@@ -141,7 +143,7 @@ class CoordFakeGenerator(Sequence):
                 bgr_img = self.bgr_augmenter.augment_image(bgr_img)
 
             if self.bird_imgs is not None:
-                n_birds = np.random.choice(4)
+                n_birds = np.random.choice(self.n_birds + 1)
                 for i in range(n_birds):
                     bird_img = random_img(self.bird_imgs)
                     bgr_img, _ = random_insert(bgr_img, bird_img, self.size_range, self.rot_range,
@@ -156,7 +158,7 @@ class CoordFakeGenerator(Sequence):
                     bgr_img = random_fragmentized_insert(bgr_img, drone_img, 10, (0.05, 0.3),
                                 size_range, self.rot_range, uniform=False, thermal=self.color==2)
 
-            n_drones = np.random.choice(range(1,4))
+            n_drones = np.random.choice(range(1, self.n_drones + 1))
             locations = np.empty((n_drones, n_output - 1))  # bboxes or coords
             for i in range(n_drones):
                 drone_img = random_img(self.drone_imgs)
