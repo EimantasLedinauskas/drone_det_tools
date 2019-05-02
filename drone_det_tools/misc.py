@@ -40,7 +40,10 @@ def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
         else:
             imgs.append(img)
 
-    return np.array(imgs)
+    if img_shape is None:
+        return np.array(imgs)
+    else:
+        return imgs
 
 
 def load_imgs_dir(img_dir, img_shape=None, grayscale=False, alpha=False):
