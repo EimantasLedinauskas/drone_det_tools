@@ -28,7 +28,7 @@ def load_imgs(paths, img_shape=None, grayscale=False, alpha=False, feathering=Fa
         colors = cv2.IMREAD_COLOR
         conversion = cv2.COLOR_BGR2RGB
 
-    imgs = [] if img_shape is None or trim else \
+    imgs = [] if img_shape is None else \
            np.empty((len(paths), *img_shape, n_channels), dtype='uint8')
 
     for i, path in enumerate(paths):
