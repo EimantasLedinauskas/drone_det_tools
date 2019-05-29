@@ -102,7 +102,7 @@ class CoordFakeGenerator(Sequence):
                  bird_paths=None, bgr_augmenter=None, augmenter=None, colors='color',
                  fragments=False, n_drones=1, n_birds=1, feathering=False):
 
-        self.drone_imgs = load_imgs(drone_paths, alpha=True, feathering=feathering, trim=True)
+        self.drone_imgs = load_imgs(drone_paths, img_shape, alpha=True, feathering=feathering, trim=True)
         self.bgr_imgs = load_imgs(bgr_paths, img_shape)
         self.batch_size = batch_size
         self.batches_per_epoch = batches_per_epoch
