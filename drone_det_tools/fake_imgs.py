@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 
-def trim_image(img, threshold=1):
+def trim_image(img):
     x, y, w, h = cv2.boundingRect(img[:, :, 3])
     return img[y:y+h, x:x+w]
 

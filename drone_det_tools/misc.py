@@ -1,3 +1,5 @@
+from drone_det_tools.fake_imgs import trim_image, smoothize_alpha
+
 import os
 import numpy as np
 import cv2
@@ -13,7 +15,7 @@ def read_img_paths(img_dir):
     return np.array(paths)
 
 
-def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
+def load_imgs(paths, img_shape=None, grayscale=False, alpha=False, feathering=False, trim=False):
     if alpha:
         n_channels = 4
         colors = cv2.IMREAD_UNCHANGED
@@ -26,7 +28,7 @@ def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
         colors = cv2.IMREAD_COLOR
         conversion = cv2.COLOR_BGR2RGB
 
-    imgs = [] if img_shape is None else \
+    imgs = [] if img_shape is None or trim else \
            np.empty((len(paths), *img_shape, n_channels), dtype='uint8')
 
     for i, path in enumerate(paths):
@@ -35,15 +37,22 @@ def load_imgs(paths, img_shape=None, grayscale=False, alpha=False):
             img = np.expand_dims(img, -1)
         else:
             img = cv2.cvtColor(img, conversion)
+
+        if trim:
+            img = trim_image(img)
+
+        if feathering:
+            img = smoothize_alpha(img)
+
         if img_shape is not None:
             imgs[i] = img if img.shape[:2] == img_shape else cv2.resize(img, img_shape[::-1])
         else:
             imgs.append(img)
 
-    if img_shape is None:
-        return np.array(imgs)
-    else:
-        return imgs
+    # if img_shape is None:
+    #     return imgs
+    # else:
+    return imgs
 
 
 def load_imgs_dir(img_dir, img_shape=None, grayscale=False, alpha=False):
