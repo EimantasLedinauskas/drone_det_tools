@@ -113,7 +113,7 @@ def remove_missing_files(pred_dict, gt_dict):
 
     return new_pred_dict
 
-def get_detection_dictionaries(true_annotations_df, pred_annotation_df):
+def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
     true_annotations = true_annotations_to_dict(true_annotations_df)
     pred_annotations = pred_annotations_to_dict(pred_annotations_df)
     pred_annotations = remove_missing_files(pred_annotations, true_annotations)
