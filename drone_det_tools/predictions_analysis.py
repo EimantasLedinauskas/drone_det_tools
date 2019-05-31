@@ -235,7 +235,7 @@ def compute_detection_stats_vs_p_thresh(pred_annotations,
                                         true_annotations,
                                         p_min=0.05,
                                         p_max=0.9,
-					                    iou_threshold=0.3,
+					                    iou_threshold=0.1,
                                         only_coords=False):
     '''
     Purpose: compute detection statistics by varying p_threshold
