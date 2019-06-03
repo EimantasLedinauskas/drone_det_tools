@@ -37,7 +37,7 @@ def iou(box1, box2):
     box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
     union_area = box1_area + box2_area - inter_area
 
-    return inter_area / (union_area + 1e-16)
+    return inter_area / union_area
 
 
 def coords_to_bbox(coords, bbox):
@@ -113,6 +113,7 @@ def remove_missing_files(pred_dict, gt_dict):
 
     return new_pred_dict
 
+
 def get_detection_dictionaries(true_annotations_df, pred_annotations_df):
     true_annotations = true_annotations_to_dict(true_annotations_df)
     pred_annotations = pred_annotations_to_dict(pred_annotations_df)
@@ -147,17 +148,23 @@ def process_image_detections(img_name, pred_annotations, true_annotations, only_
     else:
         n_drones_true = 1  # assuming only one drone
 
-    # iterating over predictions
-    for bbox_pred, p_pred in pred_annotations[img_name]:
-        probs.append(p_pred)
-        if n_drones_true == 0:
-            # compute iou
-            overlaps.append(0)  # zero iou if there is no drone
-        else:
-            if only_coords:
-                bbox_pred = coords_to_bbox(bbox_pred[:2], bbox_true)
 
-            overlaps.append(iou(bbox_pred, bbox_true))
+    if img_name in pred_annotations:
+        # iterating over predictions
+        for bbox_pred, p_pred in pred_annotations[img_name]:
+            probs.append(p_pred)
+            if n_drones_true == 0:
+                # compute iou
+                overlaps.append(0)  # zero iou if there is no drone
+            else:
+                if only_coords:
+                    bbox_pred = coords_to_bbox(bbox_pred[:2], bbox_true)
+
+                overlaps.append(iou(bbox_pred, bbox_true))
+    else:
+        overlaps.append(0)
+        probs.append(0)
+
 
     return np.array(overlaps), np.array(probs), n_drones_true
 
@@ -182,6 +189,8 @@ def get_detection_stats(pred_annotations,
     p_thresh          ---  detection treshold
     iou_thresh        ---  iou treshold
 
+    Assumes that no detection is made if there is no img_name in pred_annotations.
+
     '''
     detections = defaultdict(list)
 
@@ -191,7 +200,7 @@ def get_detection_stats(pred_annotations,
     FP = 0
     FN = 0
 
-    img_names = list(pred_annotations.keys())
+    img_names = list(true_annotations.keys())
     N_detections = len(img_names)
 
     for img_name in (img_names):
@@ -235,7 +244,7 @@ def compute_detection_stats_vs_p_thresh(pred_annotations,
                                         true_annotations,
                                         p_min=0.05,
                                         p_max=0.9,
-					                    iou_threshold=0.1,
+					iou_threshold=0.1,
                                         only_coords=False):
     '''
     Purpose: compute detection statistics by varying p_threshold
